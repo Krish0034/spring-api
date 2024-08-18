@@ -145,10 +145,7 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
         } 
         else {
             
-            /// Create a new VerificationToken
-            if (user.getUsername() != null && existingToken != null) {
-                verificationToken.setVerificationId(existingToken.getVerificationId());
-            }            
+            /// Create a new VerificationToken           
             verificationToken.setUser(managedUser);
             verificationToken.setToken(generatedToken);
             verificationToken.setExpiryDate(currentDateTime);
