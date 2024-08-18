@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: spring-api
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/api_database
+    username: root
+    password: Krish@123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        use_sql_comments: false
+#  mail services
+
+# App name: SpringApi
+# Your app password for your device: hgxk svcy tjzy tout 
+# How to use it
+# Go to the settings for your Google Account in the application or device you are trying to set up. 
+# Replace your password with the 16-character password shown above.
+# Just like your normal password, this app password grants complete access 
+# to your Google Account. You won't need to remember it, so don't write it down or share it with anyone.
+# This is the reference doc
+#  https://medium.com/@seonggil/send-email-with-spring-boot-and-gmail-27c14fc3d859
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: springboot0034@gmail.com
+    password: hgxk svcy tjzy tout 
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  jwt-secret-key: z7Dtg9fCxpnPZYvkIdpm2zD28wbOr836oOTZ5UdMwlo=
+
+
+server:
+  port: 9090
+# logging:
+#   level:
+#     org:
+#       hibernate:
+#         SQL: DEBUG
+#         type:
+#           descriptor:
+#             sql:
+#               BasicBinder: TRACE
+
+
+# jwt:
+  # Add your JWT properties here if needed
