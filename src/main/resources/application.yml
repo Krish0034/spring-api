@@ -43,10 +43,10 @@ spring:
 
 server:
   port: 9090
-# twilio:
-#   account-sid: AC5ade1a726c55a4e4f0560b9b4e53fd05
-#   auth-token: 68b6416b05175825b309d4d6d2f67dc4
-#   trial-number: +14157277298
+twilio:
+  account-sid: AC5ade1a726c55a4e4f0560b9b4e53fd05
+  auth-token: 68b6416b05175825b309d4d6d2f67dc4
+  trial-number: +14157277298
 
 
 
