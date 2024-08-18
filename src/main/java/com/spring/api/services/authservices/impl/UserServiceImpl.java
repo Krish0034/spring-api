@@ -15,6 +15,7 @@ import com.spring.api.model.auth.User;
 import com.spring.api.repository.registration.RoleRepository;
 import com.spring.api.repository.registration.UserRepository;
 import com.spring.api.services.authservices.EmailService;
+import com.spring.api.services.authservices.TwilioService;
 import com.spring.api.services.authservices.UserService;
 import com.spring.api.services.authservices.VerificationTokenService;
 import com.spring.api.util.ERole;
@@ -36,6 +37,8 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private TwilioService twilioService;
     
     @Autowired
     private VerificationTokenService verificationTokenService;
@@ -193,7 +196,11 @@ public class UserServiceImpl implements UserService {
             System.out.println("User Details before save updated: " + updateUser);
             // Save the updated user
             updateUser = userRepository.save(updateUser);
-
+            try {
+                sendOtpOnPhone(updateUser.getPhone(), EncryptionUtil.decryptText(updateUser.getOtp()));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             // Return the updated verification token
             return verificationTokenService.saveVerificationToken(updateUser);
         } else {
@@ -212,6 +219,10 @@ public class UserServiceImpl implements UserService {
     private String sendOtp(String to, String verificationCode) {
         System.out.println("Send otp by email" + verificationCode);
         return emailService.sendEmail("springboot0034@gmail.com", to, verificationCode);
+    }
+
+    private String sendOtpOnPhone(String toPhoneNumber, String verificationCode) {
+        return twilioService.sendOtpOnPhone(toPhoneNumber, verificationCode);
     }
 
     private User saveUser(User user) {

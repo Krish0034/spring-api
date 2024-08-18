@@ -28,7 +28,6 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
 
     @Autowired
     private UserRepository userRepository;
-  
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -42,33 +41,37 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
         if (otpVerificationDto.getToken() != null && otpVerificationDto.getOtp() != null) {
 
             VerificationTokenDto existVerificationToken = getVerificationToken(otpVerificationDto.getToken());
-            // logger.info("Existing VerificationToken Data: {}", existVerificationToken);
             LocalDateTime currentDate = LocalDateTime.now();
             LocalDateTime expiryDatePlusTwoMinutes = existVerificationToken.getExpiryDate().plusMinutes(2);
-            System.out.println("Token data is " + currentDate + verificationTokenRepository.isTokenExpiringWithinRange(existVerificationToken.getVerificationId(), currentDate, expiryDatePlusTwoMinutes));
-            if (existVerificationToken != null && !verificationTokenRepository.isTokenExpiringWithinRange(existVerificationToken.getVerificationId(), currentDate, expiryDatePlusTwoMinutes)) {
-                //
+            System.out.println("Token data is " + currentDate + verificationTokenRepository.isTokenExpiringWithinRange(
+                    existVerificationToken.getVerificationId(), currentDate, expiryDatePlusTwoMinutes));
+            if (existVerificationToken != null && verificationTokenRepository.isTokenExpiringWithinRange(existVerificationToken.getVerificationId(), currentDate, expiryDatePlusTwoMinutes)) {
+        
                 logger.info("VerificationToken is not expire: {}", existVerificationToken.toString());
                 String existingOtp = "";
-                System.out.println("otp is 1"+existVerificationToken.getUserId());
+                System.out.println("otp is 1" + existVerificationToken.getUserId());
                 User existingUser = getUserDetialsForUpdate(existVerificationToken.getUserId());
-                
+
                 logger.info("VerificationToken existingUser: {}", existingUser.getOtp());
-                System.out.println("Exsiting otp is "+ existingUser.getOtp());
+                System.out.println("Exsiting otp is " + existingUser.getOtp());
                 try {
                     existingOtp = EncryptionUtil.decryptText(existingUser.getOtp());
                     logger.info("decryptText existingOtp: {}", existingOtp.toString());
-                   
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 if (!existingOtp.isEmpty() && existingOtp.equals(otpVerificationDto.getOtp())) {
                     logger.info("Verify otp: {}", existingOtp.toString());
-                    existingUser.setEmailIsVerified(true);
+                    if (existingUser.getPhone() != null) 
+                    {
+                        existingUser.setPhoneIsVerified(true);;
+                    }
+                    else{
+                        existingUser.setEmailIsVerified(true);
+                    }
                     existingUser.setOtp(null);
-                    return 
-                    // new VerificationTokenResponse();
-                    saveVerificationToken(userRepository.save(existingUser));
+                    return saveVerificationToken(userRepository.save(existingUser));
                 }
             } else {
                 throw new CustomException(StatusUtil.BAD_REQUEST, ResponseMessage.TOKEN_EXPIRED_OR_INVALID);
@@ -89,20 +92,20 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
     public VerificationTokenDto getVerificationToken(String token) {
         return verificationTokenRepository.findByTokenByToken(token);
     }
+
     @Override
     public VerificationToken getVerificationTokenByToken(String token) {
         if (token == null) {
             throw new CustomException(StatusUtil.BAD_REQUEST, ResponseMessage.TOKEN_FIELD_EMPTY);
         }
         try {
-            VerificationToken existingVerificationTokenDto = 
-            verificationTokenRepository.findByToken(token);
+            VerificationToken existingVerificationTokenDto = verificationTokenRepository.findByToken(token);
 
             if (existingVerificationTokenDto == null) {
                 throw new CustomException(StatusUtil.BAD_REQUEST, ResponseMessage.TOKEN_NOT_FOUND);
             }
             System.out.println("Get verificatioin : " + existingVerificationTokenDto);
-            VerificationToken responseToken=new VerificationToken();
+            VerificationToken responseToken = new VerificationToken();
             responseToken.setVerificationId(existingVerificationTokenDto.getVerificationId());
             // responseToken.setUser(existingVerificationTokenDto.getUserId());
             responseToken.setToken(existingVerificationTokenDto.getToken());
@@ -128,7 +131,7 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
         String generatedToken = jwtUtil.generateToken(managedUser.getEmail(), 5 * 60 * 1000);
         LocalDateTime currentDateTime = LocalDateTime.now();
 
-        if (existingToken != null ) {
+        if (existingToken != null) {
             System.out.println("udate token" + existingToken);
             // Update existing token
             verificationToken.setVerificationId(existingToken.getVerificationId());
@@ -142,10 +145,9 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
                 logger.error("Error updating verification token: {}", e.getMessage());
                 throw new CustomException(StatusUtil.BAD_REQUEST, e.getMessage());
             }
-        } 
-        else {
-            
-            /// Create a new VerificationToken           
+        } else {
+
+            /// Create a new VerificationToken
             verificationToken.setUser(managedUser);
             verificationToken.setToken(generatedToken);
             verificationToken.setExpiryDate(currentDateTime);

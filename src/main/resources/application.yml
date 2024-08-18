@@ -43,16 +43,27 @@ spring:
 
 server:
   port: 9090
-# logging:
-#   level:
-#     org:
-#       hibernate:
-#         SQL: DEBUG
-#         type:
-#           descriptor:
-#             sql:
-#               BasicBinder: TRACE
+twilio:
+  account-sid: AC5ade1a726c55a4e4f0560b9b4e53fd05
+  auth-token: 68b6416b05175825b309d4d6d2f67dc4
+  trial-number: +14157277298
+
 
 
 # jwt:
   # Add your JWT properties here if needed
+
+# Twilio: ####
+#  username: springboot0034@gmail.com
+#  password: SPRingboot@003400
+# ##### Recovery code #######
+# If you lose your phone, or don’t have access to your verification device, this code is your failsafe to access your account.
+# UMX93FUW6NPD8YAGDLRS4RE7
+
+#  ####Account Info ####
+#  Account SID:  AC5ade1a726c55a4e4f0560b9b4e53fd05
+#  Auth Token: 68b6416b05175825b309d4d6d2f67dc4
+
+#  Create new Service
+# Friendly name: Verification Code
+#  Service SID: VAdd7bbdde7933bbe41b28785e36c4a751

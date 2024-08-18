@@ -50,12 +50,3 @@ CREATE TABLE verification_token (
 
 SELECT * FROM verification_token;
 
-SELECT vt FROM verification_token vt JOIN FETCH vt.user WHERE vt.token = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJrcmlzaDJAeW9wbWFpbC5jb20iLCJpYXQiOjE3MjM2Mzk3NDMsImV4cCI6MTcyMzY0MDA0M30.QPTtwwVk5nZWMtcW91I0pktt_qNXYaf2KpLCpw_pNAU'
-
-SELECT CASE 
-           WHEN vt1_0.expiry_date BETWEEN NOW() AND DATE_ADD(vt1_0.expiry_date, INTERVAL 2 MINUTE) 
-           THEN 1 
-           ELSE 0 
-       END 
-FROM verification_token vt1_0 
-WHERE vt1_0.verification_id = 2;

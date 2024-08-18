@@ -19,7 +19,7 @@ public class SpringApiApplication {
             System.out.println("Encrypted: " + encryptedText);
 
             // Decrypt the text
-            String decryptedText = EncryptionUtil.decryptText("7bBr5GJoZYwvJgVovNKhFw==");
+            String decryptedText = EncryptionUtil.decryptText("YokCqt2ZEMWSKPq0JasTMQ==");
             System.out.println("Decrypted: " + decryptedText);
             
         } catch (Exception e) {
