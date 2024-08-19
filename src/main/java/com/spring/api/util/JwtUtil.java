@@ -11,7 +11,11 @@ import java.security.Key;
 import java.util.Date;
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,10 +36,13 @@ public class JwtUtil {
      */
 
 
-    public String generateToken(String username, long expiration) {
-        System.out.println("Generate Token");
+    public String generateToken(String username, long expiration, Collection<? extends GrantedAuthority> authorities) {
+        List<String> roles = authorities.stream()
+                                        .map(GrantedAuthority::getAuthority)
+                                        .collect(Collectors.toList());
         String genratedToken =Jwts.builder()
         .subject(username)
+        .claim("roles", roles) 
         .issuedAt(new Date())
         .expiration(new Date(System.currentTimeMillis() + expiration))
         .signWith(key())
@@ -47,7 +54,6 @@ public class JwtUtil {
     private Key key()
     {
         Key key=Keys.hmacShaKeyFor(Decoders.BASE64.decode(JWT_SECRET_KEY));
-        System.out.println("Generated Key func"+key);
         return key;
     }
 
@@ -63,6 +69,8 @@ public class JwtUtil {
     }
 
     public String getUsernameFromToken(String token) {
+
+        System.out.println("Authorization Header: 4" + token);
         return Jwts
                 .parser()
                 .verifyWith((SecretKey) key())

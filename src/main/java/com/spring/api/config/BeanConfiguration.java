@@ -10,10 +10,9 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-
 import com.spring.api.repository.registration.UserRepository;
+import com.spring.api.services.authservices.impl.CustomUserDetailsService;
 
 @Configuration
 public class BeanConfiguration {
@@ -22,14 +21,9 @@ public class BeanConfiguration {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Bean
+@Bean
     public UserDetailsService userDetailsService() {
-        return username -> {
-            logger.info("Searching for user: {}", username);
-            return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
-        };
+        return new CustomUserDetailsService(userRepository);
     }
 
     @Bean

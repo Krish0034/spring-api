@@ -21,13 +21,16 @@ CREATE TABLE user (
     last_name VARCHAR(50),
     email_is_verified BOOLEAN NOT NULL DEFAULT FALSE,
     phone_is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    account_status BOOLEAN NOT NULL DEFAULT FALSE,
+    account_non_locked BOOLEAN NOT NULL DEFAULT FALSE,
     profile_pic_url VARCHAR(255),
     response_token VARCHAR(255),
     otp VARCHAR(100)
     
 );
 
-
+ALTER TABLE user
+ADD column_name account_status; 
 SELECT * FROM user;
 
 CREATE TABLE user_role (

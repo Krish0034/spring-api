@@ -37,14 +37,14 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
     
         logger.debug("Authorization Header: {}",request.getRequestURI());
+    
         try {
             String jwt = jwtFromRequest(request);
-            
-
             if(jwt !=null && jwtUtil.validateJwtToken(jwt))
             {
-                String userEmail = jwtUtil.getUsernameFromToken(jwt);
-                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+                String userName = jwtUtil.getUsernameFromToken(jwt);
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userName);
+                System.out.println("user get authorities is :"+userDetails.getAuthorities());
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
@@ -56,6 +56,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
            
             filterChain.doFilter(request, response);
         } catch (Exception exception) {
+            System.out.println("Authorization Header: 1" + exception);
             handlerExceptionResolver.resolveException(request, response, null, exception);
         }
     }

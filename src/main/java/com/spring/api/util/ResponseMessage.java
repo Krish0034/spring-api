@@ -22,4 +22,8 @@ public class ResponseMessage {
     public static final String TOKEN_NOT_FOUND = "Token not found.";
     public static final String TOKEN_EXPIRED_OR_INVALID = "Token is expired or invalid.";
     public static final String OTP_FIELD_EMPTY = "OTP field empty.";
+    public static final String INVALID_CREDENTIALS = "Invalid credentials.";
+    public static final String ACCOUNT_INACTIVE = "Account Inactive.";
+    public static final String LOGIN_FAILED = "Login failed.";
+    public static final String FETCH_FAILED = "Fetch data failed.";
 }

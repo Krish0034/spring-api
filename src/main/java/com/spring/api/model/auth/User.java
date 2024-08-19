@@ -56,6 +56,10 @@ public class User implements UserDetails {
     private String responseToken;
     @Column(name = "otp", length = 100)
     private String otp;
+    @Column(name = "account_status",nullable = false)
+    private Boolean accountStatus= true;
+    @Column(name = "account_non_locked",nullable = false)
+    private Boolean isAccountNonLocked= true;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -75,6 +79,15 @@ public class User implements UserDetails {
         return roles;
     }
 
+    @Override
+    public boolean isEnabled() { 
+        return accountStatus; 
+    }
+    @Override
+    public boolean isAccountNonExpired() {
+		return isAccountNonLocked;
+	}
+
    
     public User(Long userId, String username, String email, String phone, String firstName, String lastName,
                 String profilePicUrl, Boolean emailIsVerified, Boolean phoneIsVerified, Set<Role> roles) {
@@ -89,5 +102,6 @@ public class User implements UserDetails {
         this.phoneIsVerified = phoneIsVerified;
         this.roles = roles;
     }
+
 
 }

@@ -5,8 +5,18 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.spring.api.dto.LoginResponse;
+import com.spring.api.dto.LoginUserDto;
 import com.spring.api.dto.UserDto;
 import com.spring.api.dto.VerificationTokenResponse;
 import com.spring.api.exception.CustomException;
@@ -20,12 +30,18 @@ import com.spring.api.services.authservices.UserService;
 import com.spring.api.services.authservices.VerificationTokenService;
 import com.spring.api.util.ERole;
 import com.spring.api.util.EncryptionUtil;
+import com.spring.api.util.JwtUtil;
 import com.spring.api.util.ResponseMessage;
 import com.spring.api.util.StatusUtil;
 import com.spring.api.util.UtilFunction;
+import java.util.List;
+import java.util.stream.Collectors;
+
 
 @Service
 public class UserServiceImpl implements UserService {
+    @Autowired
+    private AuthenticationManager authenticationManager;
     @Autowired
     private UserRepository userRepository;
 
@@ -39,21 +55,23 @@ public class UserServiceImpl implements UserService {
     private EmailService emailService;
     @Autowired
     private TwilioService twilioService;
-    
+
     @Autowired
     private VerificationTokenService verificationTokenService;
 
+    @Autowired
+    private JwtUtil jwtUtil;
 
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
     @Override
-    public VerificationTokenResponse adminSignup(UserDto userDtoRequest) {
+    public VerificationTokenResponse adminSignup(UserDto userDtoRequest,Integer userType) {
         logger.debug("Admin signup request received for email: {}", userDtoRequest.getEmail());
         if (userDtoRequest.getEmail() != null && !userDtoRequest.getEmail().isEmpty()) {
             if (userDtoRequest.getPassword() == null || userDtoRequest.getPassword().isEmpty()) {
                 throw new CustomException(StatusUtil.BAD_REQUEST, ResponseMessage.PASSWORD_EMPTY);
             } else {
-                return handleEmailSignup(userDtoRequest);
+                return handleEmailSignup(userDtoRequest,userType);
             }
         }
         // Handle username and phone cases
@@ -110,8 +128,37 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    @Override
+    public LoginResponse login(LoginUserDto loginUserDto) {
+        try {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginUserDto.getEmail(),
+                        loginUserDto.getPassword()));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-    private VerificationTokenResponse handleEmailSignup(UserDto userDtoRequest) {
+        // Check if the account is active (you can customize this according to your UserDetails implementation)
+        if (!userDetails.isAccountNonLocked() || !userDetails.isEnabled()) {
+            throw new CustomException(StatusUtil.FORBIDDEN, ResponseMessage.ACCOUNT_INACTIVE);
+        }
+   
+        // 2 Days in Milliseconds:
+        // 2 * 24 * 60 * 60 * 1000
+        String jwt = jwtUtil.generateToken(userDetails.getUsername(), 2 * 24 * 60 * 60 * 1000,userDetails.getAuthorities());
+        return new LoginResponse(jwt, 2 * 24 * 60 * 60 * 1000);
+
+    } catch (BadCredentialsException e) {
+        throw new CustomException(StatusUtil.UNAUTHORIZED, ResponseMessage.INVALID_CREDENTIALS);
+    } catch (LockedException | DisabledException e) {
+        throw new CustomException(StatusUtil.FORBIDDEN, ResponseMessage.ACCOUNT_INACTIVE);
+    } catch (Exception e) {
+        System.out.println("Verification data is "+e.toString());
+        throw new CustomException(StatusUtil.INTERNAL_SERVER_ERROR, ResponseMessage.LOGIN_FAILED);
+    }
+    }
+
+    private VerificationTokenResponse handleEmailSignup(UserDto userDtoRequest,Integer userType) {
 
         if (userRepository.existsByEmail(userDtoRequest.getEmail())) {
             throw new CustomException(StatusUtil.BAD_REQUEST, ResponseMessage.EMAIL_EXIST);
@@ -127,7 +174,12 @@ public class UserServiceImpl implements UserService {
             user.setEmailIsVerified(false);
             user.setPhoneIsVerified(false);
             user.setResponseToken(null);
-            setAdminRole(user);
+            if(userType ==1){
+                setAdminRole(user);
+            }
+            else{
+                setUserRole(user);
+            }
             try {
                 user.setOtp(EncryptionUtil.encryptText(UtilFunction.generateOTP()));
             } catch (Exception e) {
@@ -165,22 +217,28 @@ public class UserServiceImpl implements UserService {
             }
         }
         User existingUser = getUserDetialsForUpdate(userDtoRequest.getUserId());
-        
+
         if (existingUser != null) {
 
             User updateUser = new User();
             updateUser.setUserId(existingUser.getUserId());
             // Update username if present
-            updateUser.setUsername(userDtoRequest.getUsername() != null ? userDtoRequest.getUsername() : existingUser.getUsername());
+            updateUser.setUsername(
+                    userDtoRequest.getUsername() != null ? userDtoRequest.getUsername() : existingUser.getUsername());
             // Update phone if present
-            updateUser.setPhone(userDtoRequest.getPhone() != null ? userDtoRequest.getPhone() : existingUser.getPhone());
+            updateUser
+                    .setPhone(userDtoRequest.getPhone() != null ? userDtoRequest.getPhone() : existingUser.getPhone());
             // Update first name if present
-            updateUser.setFirstName(userDtoRequest.getFirstName() != null ? userDtoRequest.getFirstName() : existingUser.getFirstName());
+            updateUser.setFirstName(userDtoRequest.getFirstName() != null ? userDtoRequest.getFirstName()
+                    : existingUser.getFirstName());
             // Update last name if present
-            updateUser.setLastName(userDtoRequest.getLastName() != null ? userDtoRequest.getLastName() : existingUser.getLastName());
+            updateUser.setLastName(
+                    userDtoRequest.getLastName() != null ? userDtoRequest.getLastName() : existingUser.getLastName());
             // Update profile pic URL if present
-            updateUser.setProfilePicUrl(userDtoRequest.getProfilePicUrl() != null ? userDtoRequest.getProfilePicUrl(): existingUser.getProfilePicUrl());
-            updateUser.setEmail(userDtoRequest.getEmail() != null ? userDtoRequest.getEmail() : existingUser.getEmail());
+            updateUser.setProfilePicUrl(userDtoRequest.getProfilePicUrl() != null ? userDtoRequest.getProfilePicUrl()
+                    : existingUser.getProfilePicUrl());
+            updateUser
+                    .setEmail(userDtoRequest.getEmail() != null ? userDtoRequest.getEmail() : existingUser.getEmail());
             if (userDtoRequest.getPhone() != null) {
                 try {
                     updateUser.setOtp(EncryptionUtil.encryptText(UtilFunction.generateOTP()));
@@ -214,7 +272,10 @@ public class UserServiceImpl implements UserService {
         Role adminRole = roleRepository.findByRoleName(ERole.ADMIN);
         user.setRoles(Collections.singleton(adminRole));
     }
-
+    private void setUserRole(User user) {
+        Role userRole = roleRepository.findByRoleName(ERole.USER);
+        user.setRoles(Collections.singleton(userRole));
+    }
 
     private String sendOtp(String to, String verificationCode) {
         System.out.println("Send otp by email" + verificationCode);
@@ -238,6 +299,28 @@ public class UserServiceImpl implements UserService {
         return saveUser;
     }
 
-
+    @Override
+    public List<UserDto> getAllUsersDetails() {
+        try {
+            List<User> users = userRepository.findAll();
+            return users.stream().map(user -> {
+                UserDto dto = new UserDto();
+                dto.setUserId(user.getUserId());
+                dto.setEmail(user.getEmail());
+                dto.setUsername(user.getUsername());
+                dto.setPhone(user.getPhone());
+                dto.setFirstName(user.getFirstName());
+                dto.setLastName(user.getLastName());
+                dto.setProfilePicUrl(user.getProfilePicUrl());
+                dto.setEmailIsVerified(user.getEmailIsVerified());
+                dto.setPhoneIsVerified(user.getPhoneIsVerified());
+                return dto;
+            }).collect(Collectors.toList());
+        } catch (Exception e) {
+            logger.error("Error fetching user details", e);
+            throw new CustomException(StatusUtil.INTERNAL_SERVER_ERROR, ResponseMessage.FETCH_FAILED);
+        }
+    }
+    
 
 }

@@ -1,10 +1,10 @@
 package com.spring.api.services.authservices.impl;
 
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import com.spring.api.dto.OtpVerificationDto;
 import com.spring.api.dto.UserDto;
@@ -128,7 +128,8 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
         // Find existing token for the user
         VerificationTokenDto existingToken = verificationTokenRepository.findTokenByUserId(managedUser.getUserId());
         VerificationToken verificationToken = new VerificationToken();
-        String generatedToken = jwtUtil.generateToken(managedUser.getEmail(), 5 * 60 * 1000);
+       
+        String generatedToken = jwtUtil.generateToken(managedUser.getEmail(), 5 * 60 * 1000,managedUser.getAuthorities());
         LocalDateTime currentDateTime = LocalDateTime.now();
 
         if (existingToken != null) {
